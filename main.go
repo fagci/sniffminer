@@ -88,15 +88,13 @@ func InitHandle() bool {
 }
 
 func Loop(packets <-chan gopacket.Packet) {
-	running := true
 	ticker := time.NewTicker(time.Second)
 
-	for running {
+	for {
 		select {
 		case packet, ok := <-packets:
 			if !ok {
-				running = false
-				break
+				return
 			}
 			packetCount++
 			if pcapFile != nil {
