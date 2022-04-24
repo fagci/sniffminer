@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"pcap/file"
+	"sniffminer/file"
 	"time"
 
 	"github.com/google/gopacket"
@@ -17,12 +17,15 @@ var (
 	pcapInputFile  string
 	pcapOutputFile string
 	deviceName     string
-	snapshotLen    uint32 = 65535
 	timeout        time.Duration
-	packetCount    uint64
-	pcapFile       *file.Pcap
-	handle         *pcap.Handle
-	err            error
+	snapshotLen    uint32 = 65535
+)
+
+var (
+	packetCount uint64
+	err         error
+	pcapFile    *file.Pcap
+	handle      *pcap.Handle
 )
 
 func init() {
@@ -34,8 +37,6 @@ func init() {
 
 func main() {
 	flag.Parse()
-	goterm.Clear()
-	goterm.Flush()
 
 	if !InitHandle() {
 		fmt.Println("No input specified")
@@ -51,9 +52,8 @@ func main() {
 
 	packets := packetSource.Packets()
 
+    Stats()
 	Loop(packets)
-
-	goterm.Clear()
 	Stats()
 }
 
@@ -101,13 +101,13 @@ func Loop(packets <-chan gopacket.Packet) {
 				pcapFile.Write(packet)
 			}
 		case <-ticker.C:
-			goterm.Clear()
 			Stats()
 		}
 	}
 }
 
 func Stats() {
+    goterm.Clear()
 	goterm.MoveCursor(1, 1)
 	goterm.Println("Packets:", packetCount)
 	goterm.Flush()
