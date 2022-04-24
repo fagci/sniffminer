@@ -1,4 +1,4 @@
-module pcap
+module sniffminer
 
 go 1.18
 
