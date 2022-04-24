@@ -7,10 +7,9 @@ import (
 	"sniffminer/file"
 	"time"
 
+	"github.com/buger/goterm"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
-
-	"github.com/buger/goterm"
 )
 
 var (
