@@ -23,9 +23,7 @@ var (
 
 var (
 	packetCount uint64
-	err         error
 	pcapFile    *file.Pcap
-	handle      *pcap.Handle
 )
 
 func init() {
@@ -35,56 +33,11 @@ func init() {
 	flag.DurationVar(&timeout, "t", -1*time.Second, "timeout")
 }
 
-func main() {
-	flag.Parse()
-
-	if !InitHandle() {
-		fmt.Println("No input specified")
-		os.Exit(1)
-	}
-	defer handle.Close()
-
-	if InitOutput() {
-		defer pcapFile.Close()
-	}
-
-	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-
-	packets := packetSource.Packets()
-
-    Stats()
-	Loop(packets)
-	Stats()
-}
-
-func InitOutput() bool {
-	if pcapOutputFile != "" {
-		pcapFile = file.NewPcap(pcapOutputFile, snapshotLen)
-		return true
-	}
-	return false
-}
-
-func InitHandle() bool {
-	if pcapInputFile != "" {
-		handle, err = pcap.OpenOffline(pcapInputFile)
-		if err != nil {
-			fmt.Println("Cannot open file:", pcapFile, err)
-			os.Exit(1)
-		}
-	} else if deviceName != "" {
-		if pcapOutputFile == "" {
-			pcapOutputFile = time.Now().Format("20060102_150405") + ".pcap"
-		}
-		handle, err = pcap.OpenLive(deviceName, int32(snapshotLen), true, timeout)
-		if err != nil {
-			fmt.Printf("Error opening device %s: %v\n", deviceName, err)
-			os.Exit(1)
-		}
-	} else {
-		return false
-	}
-	return true
+func Stats() {
+	goterm.Clear()
+	goterm.MoveCursor(1, 1)
+	goterm.Println("Packets:", packetCount)
+	goterm.Flush()
 }
 
 func Loop(packets <-chan gopacket.Packet) {
@@ -96,19 +49,56 @@ func Loop(packets <-chan gopacket.Packet) {
 			if !ok {
 				return
 			}
-			packetCount++
 			if pcapFile != nil {
 				pcapFile.Write(packet)
 			}
+			packetCount++
 		case <-ticker.C:
 			Stats()
 		}
 	}
 }
 
-func Stats() {
-    goterm.Clear()
-	goterm.MoveCursor(1, 1)
-	goterm.Println("Packets:", packetCount)
-	goterm.Flush()
+func main() {
+	flag.Parse()
+
+	handle, err := InitHandle()
+	if err != nil {
+		fmt.Printf("Error opening input %v\n", err)
+		os.Exit(1)
+	}
+	if handle == nil {
+		fmt.Println("No input specified")
+		os.Exit(1)
+	}
+	defer handle.Close()
+
+	if pcapOutputFile == "" && deviceName != "" {
+		pcapOutputFile = time.Now().Format("20060102_150405") + ".pcap"
+	}
+
+	if pcapOutputFile != "" {
+		pcapFile = file.NewPcap(pcapOutputFile, snapshotLen)
+		defer pcapFile.Close()
+	}
+
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+
+	Stats()
+	Loop(packetSource.Packets())
+	Stats()
+}
+
+func InitHandle() (handle *pcap.Handle, err error) {
+	if pcapInputFile != "" {
+		handle, err = pcap.OpenOffline(pcapInputFile)
+		return
+	}
+
+	if deviceName != "" {
+		handle, err = pcap.OpenLive(deviceName, int32(snapshotLen), true, timeout)
+		return
+	}
+
+	return
 }
