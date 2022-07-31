@@ -44,8 +44,8 @@ func Loop(packets <-chan gopacket.Packet) {
 
 	for {
 		select {
-		case packet, ok := <-packets:
-			if !ok {
+		case packet := <-packets:
+			if packet == nil {
 				return
 			}
 			if pcapFile != nil {
