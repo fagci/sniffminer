@@ -31,25 +31,24 @@ class IPStats
     @hostnames = @hostnames.to_a.sort
     @open_ports = @open_ports.to_a.sort
 
-    stats = {
-      'Ports': @open_ports.join('; '),
-      'Domains': @domains.join('; '),
-    }
-    largest_name_length = stats.keys.map(&:length).max + 1
-
-    stat = stats.filter_map do |k, v| 
-      "#{("#{k}:".yellow).ljust(largest_name_length)} #{v}" unless v.empty?
-    end.join("\n")
-
     top_line = [
       @ip.green,
       @hostnames.join('; ').yellow,
       "⇅#{@pkt_count}".blue
     ]
 
+    stats = {
+      'Ports': @open_ports.join('; '),
+      'Domains': @domains.join('; '),
+    }
+
+    stat = stats.filter_map do |k, v| 
+      "#{"#{k}:".yellow} #{v}" unless v.empty?
+    end.join("\n")
+
     <<~STATS.strip
       #{top_line.reject(&:empty?).join(' ')}
-    #{@macs.map{|mac| "• #{mac} #{get_vendor(mac).yellow}"}.join("\n")}
+      #{@macs.map{|mac| "• #{mac} #{get_vendor(mac).yellow}"}.join("\n")}
 
       #{stat}
     STATS
