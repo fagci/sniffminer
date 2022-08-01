@@ -10,18 +10,14 @@ require_relative 'ipstats'
 class Miner
   def initialize
     @mac_hostname = {}
-    @local_ips = Hash.new { |h, k| h[k] = IPStats.new }
+    @local_ips = Hash.new { |h, k| h[k] = IPStats.new(k) }
   end
 
-  def feed_multiple(files)
-    files.each { |file| feed(file) }
-  end
-
-  def feed(file)
-    PacketFu::PcapFile.read_packets(file).each do |packet|
-      next unless packet.proto.include? 'IP'
-
-      process(packet)
+  def feed(*files)
+    files.each do |file|
+      PacketFu::PcapFile.read_packets(file).each do |packet|
+        process(packet) if packet.proto.include? 'IP'
+      end
     end
   end
 
@@ -54,7 +50,7 @@ class Miner
     when PacketFu::TCPPacket
       # NOTE: alpha version of open ports detection
       if IPAddr.new(packet.ip_saddr).private? && packet.tcp_src <= 1024
-        @local_ips[packet.ip_saddr].server_ports.add(packet.tcp_src)
+        @local_ips[packet.ip_saddr].open_ports.add(packet.tcp_src)
       end
     end
   end
@@ -65,13 +61,7 @@ class Miner
         stats.hostnames.add(@mac_hostname[mac])
       end
     end
-    @local_ips.sort.map do |ip, stats|
-      <<~STATS
-        #{ip}
-        --------------------
-        #{stats}
 
-      STATS
-    end
+    @local_ips.sort.to_h.values.join("\n\n")
   end
 end

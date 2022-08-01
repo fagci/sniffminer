@@ -4,5 +4,5 @@
 require_relative 'miner/miner'
 
 miner = Miner.new
-miner.feed_multiple(ARGV)
+miner.feed(*ARGV)
 puts miner.stats
