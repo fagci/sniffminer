@@ -3,14 +3,20 @@
 Sniffer &amp; miner.  
 Passively gathers network information.
 
+## Build
+
+```sh
+make
+```
+
 ## Usage
 
 ```sh
-sudo ./sniffer -i wlan0
+sudo ./sniff -i wlan0
 ```
 
 ```sh
-./miner.rb 20220731_153235.pcap
+./mine.rb 20220731_153235.pcap
 ```
 
 ## Requirements
