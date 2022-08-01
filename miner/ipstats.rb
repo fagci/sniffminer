@@ -3,12 +3,13 @@
 # All stats for single IP is here
 class IPStats
   DB = File.open('./miner/vendors.txt').read.downcase.lines.map(&:chomp).freeze
-  attr_accessor :pkt_count, :macs, :domains, :hostnames
+  attr_accessor :pkt_count, :macs, :domains, :hostnames, :server_ports
 
   def initialize
     @macs = Set.new
     @domains = Set.new
     @hostnames = Set.new
+    @server_ports = Set.new
     @pkt_count = 0
   end
 
@@ -26,15 +27,18 @@ class IPStats
     @macs = @macs.to_a.sort
     @domains = @domains.to_a.sort
     @hostnames = @hostnames.to_a.sort
+    @server_ports = @server_ports.to_a.sort
 
-    <<~STATS
-      --------------------
-      Packets: #{@pkt_count}
-      MACs:    #{@macs.join('; ')}
-      Vendors: #{vendors.join('; ')}
-      Hostnames: #{@hostnames.join('; ')}
-      Domains: #{@domains.join('; ')}
-    STATS
+    stats = {
+      'Packets': @pkt_count.to_s,
+      'MACs': @macs.join('; '),
+      'Vendors': vendors.join('; '),
+      'Hostnames': @hostnames.join('; '),
+      'Domains': @domains.join('; '),
+      'Server ports': @server_ports.join('; ')
+    }
+    largest_name_length = stats.keys.map(&:length).max + 1
+    stats.filter_map { |k, v| "#{("#{k}:").ljust(largest_name_length)} #{v}" unless v.empty? }.join("\n")
   end
 
   def get_vendor(mac)
