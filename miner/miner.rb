@@ -7,14 +7,17 @@ require_relative 'ipstats'
 
 # Collects infos about hosts from pcap file
 class Miner
-  def initialize(file)
-    @packets = PacketFu::PcapFile.read_packets(file)
+  def initialize
     @local_ips = Hash.new { |h, k| h[k] = IPStats.new }
     @mac_hostname = {}
   end
 
-  def mine
-    @packets.each do |packet|
+  def feed_multiple(files)
+    files.each { |file| feed(file) }
+  end
+
+  def feed(file)
+    PacketFu::PcapFile.read_packets(file).each do |packet|
       next unless packet.proto.include? 'IP'
 
       %w[saddr daddr].each do |dest|
@@ -32,15 +35,14 @@ class Miner
         end
       end
     end
+  end
 
+  def stats
     @local_ips.each do |_ip, stats|
       stats.macs.each do |mac|
         stats.hostnames.add(@mac_hostname[mac])
       end
     end
-  end
-
-  def stats
     @local_ips.sort.map do |ip, stats|
       <<~STATS
         #{ip}
