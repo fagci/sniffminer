@@ -4,7 +4,7 @@ require 'colorize'
 # All stats for single IP is here
 class IPStats
   DB = File.open('./miner/vendors.txt').read.downcase.lines.map(&:chomp).freeze
-  attr_accessor :pkt_count, :macs, :domains, :hostnames, :server_ports
+  attr_accessor :pkt_count, :macs, :domains, :hostnames, :open_ports
 
   def initialize(ip)
     @ip = ip
