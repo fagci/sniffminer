@@ -11,7 +11,7 @@ class IPStats
     @macs = Set.new
     @domains = Set.new
     @hostnames = Set.new
-    @server_ports = Set.new
+    @open_ports = Set.new
     @pkt_count = 0
   end
 
