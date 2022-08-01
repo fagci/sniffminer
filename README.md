@@ -6,11 +6,11 @@ Passively gathers network information.
 ## Usage
 
 ```sh
-sudo ./sniffminer -i wlan0
+sudo ./sniffer -i wlan0
 ```
 
 ```sh
-./info.rb 20220731_153235.pcap
+./miner.rb 20220731_153235.pcap
 ```
 
 ## Requirements

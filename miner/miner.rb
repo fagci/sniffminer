@@ -2,53 +2,10 @@
 # frozen_string_literal: true
 
 require 'set'
-
 require 'packetfu'
+require_relative 'ipstats'
 
-class IPStats
-  DB = File.open('./vendors.txt').read.downcase.lines.map(&:chomp).freeze
-  attr_accessor :pkt_count, :macs, :domains, :hostnames
-
-  def initialize
-    @macs = Set.new
-    @domains = Set.new
-    @hostnames = Set.new
-    @pkt_count = 0
-  end
-
-  def new_packet
-    @pkt_count += 1
-  end
-
-  def vendors
-    @macs.map do |mac|
-      get_vendor(mac)
-    end
-  end
-
-  def to_s
-    @macs = @macs.to_a.sort
-    @domains = @domains.to_a.sort
-    @hostnames = @hostnames.to_a.sort
-
-    <<~STATS
-      --------------------
-      Packets: #{@pkt_count}
-      MACs:    #{@macs.join('; ')}
-      Vendors: #{vendors.join('; ')}
-      Hostnames: #{@hostnames.join('; ')}
-      Domains: #{@domains.join('; ')}
-    STATS
-  end
-
-  def get_vendor(mac)
-    mac = mac.to_s.gsub(':', '')
-    DB.find do |line|
-      mac.start_with? line.split.first
-    end.to_s.split(' ', 2).last || 'n/a'
-  end
-end
-
+# Collects infos about hosts from pcap file
 class Miner
   def initialize(file)
     @packets = PacketFu::PcapFile.read_packets(file)
@@ -93,9 +50,9 @@ class Miner
   end
 
   def parse_dns_query(packet)
-    raw_domain = packet.payload[12..-1].to_s
+    raw_domain = packet.payload[12..].to_s
 
-    return nil if raw_domain[0].ord == 0
+    return nil if raw_domain[0].ord.zero?
 
     fqdn = []
     offset = raw_domain[0].ord
@@ -113,7 +70,7 @@ class Miner
   end
 
   def parse_dhcp_query(packet)
-    hex = packet.payload[240..-1]
+    hex = packet.payload[240..]
 
     i = 0
     options = []
@@ -133,7 +90,3 @@ class Miner
     options.join(', ')
   end
 end
-
-miner = Miner.new(ARGV.first)
-miner.mine
-puts miner.stats

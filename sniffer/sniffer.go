@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"sniffminer/file"
+	"sniffer/file"
 	"time"
 
 	"github.com/buger/goterm"
